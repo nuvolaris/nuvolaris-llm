@@ -32,11 +32,11 @@ tasks:
       --image-project=ubuntu-os-cloud
       --maintenance-policy=TERMINATE
       --metadata-from-file user-data=cloud-init.yml
-      --preemptible
     - task: _add-sshkey
     - task: _wait-ready
     # do it again because of reboot
     - task: _wait-ready
+    - task: _mount
 
   _wait-ready:
     - task: _get-ip
@@ -55,9 +55,6 @@ tasks:
         add-metadata "{{.NAME}}" --zone="{{.ZONE}}" 
         --metadata-from-file ssh-keys=_sshkey
       - task: _get-ip
-      - scp {{.SSHOPTS}} {{.SSHKEYPRIV}} ubuntu@"$(cat _ip)":.ssh/id_rsa
-      - ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" chmod 0600 .ssh/id_rsa
-
 
   _get-ip:
     silent: true
@@ -67,14 +64,16 @@ tasks:
       describe "{{.NAME}}" --zone="{{.ZONE}}"
       --format='get(networkInterfaces[0].accessConfigs[0].natIP)' >_ip
     - |
-      if test -z "$(cat _ip)"
+      IP="$(cat _ip)"
+      if test -z "$IP"
       then echo "vm not active" ; false
+      else echo "$IP"
       fi
 
-  enter:
-    desc: enter vm
-    cmds:
+  _mount:
     - task: _get-ip
+    - scp {{.SSHOPTS}} {{.SSHKEYPRIV}} ubuntu@"$(cat _ip)":.ssh/id_rsa
+    - ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" chmod 0600 .ssh/id_rsa
     - >
       ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" 
       "mkdir -p ~/olaris-llm"
@@ -84,6 +83,15 @@ tasks:
       -o allow_other,default_permissions
       -o IdentityFile=~/.ssh/id_rsa 
       ubuntu@{{.ORIG}}:$(dirname $PWD) ~/olaris-llm"
+
+  list:
+    desc: enter vm
+    cmds:
+    - gcloud compute instances list 
+
+  enter:
+    desc: enter vm
+    cmds:
     - gcloud compute ssh "{{.NAME}}" --zone="{{.ZONE}}"
 
   destroy:

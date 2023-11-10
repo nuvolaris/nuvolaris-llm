@@ -1,0 +1,102 @@
+version: '3'
+
+vars:
+  ORIG: devkit.nuvolaris.io
+  NAME: llm-0-1-gcp
+  ZONE: europe-west4-a
+  SSHKEYPRIV: ~/.ssh/id_rsa
+  SSHKEY: ~/.ssh/id_rsa.pub
+  SSHOPTS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+  MTYPE: n1-standard-8
+  GPUS: nvidia-tesla-t4,count=1
+  #MTYPE: a2-highgpu-1g # 40gb
+  #MTYPE: a2-ultragpu-1g # 80gb
+  #GPUS: nvidia-tesla-a100,count=1
+ 
+tasks:
+
+  find-zone:
+    - gcloud compute machine-types list --format="table(name, zone)" | grep {{.MTYPE}}
+
+  create:
+    desc: create vm with gpu 
+    ignore_error: true
+    cmds: 
+    - >
+      gcloud compute instances create "{{.NAME}}"
+      --zone={{.ZONE}}
+      --machine-type={{.MTYPE}}
+      --accelerator=type={{.GPUS}}
+      --boot-disk-size=200GB
+      --image-family=ubuntu-2204-lts 
+      --image-project=ubuntu-os-cloud
+      --maintenance-policy=TERMINATE
+      --metadata-from-file user-data=cloud-init.yml
+      --preemptible
+    - task: _add-sshkey
+    - task: _wait-ready
+    # do it again because of reboot
+    - task: _wait-ready
+
+  _wait-ready:
+    - task: _get-ip
+    - retry -t 100 -m 600 ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" hostname
+    - retry -t 100 -m 600 ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" cloud-init status --wait 
+
+  _add-sshkey:
+    silent: true
+    cmds:
+      - > 
+       cat {{.SSHKEY}} | 
+       awk '/ssh-rsa/{ print "ubuntu:ssh-rsa " $2 }'
+       >_sshkey
+      - >  
+        gcloud compute instances 
+        add-metadata "{{.NAME}}" --zone="{{.ZONE}}" 
+        --metadata-from-file ssh-keys=_sshkey
+      - task: _get-ip
+      - scp {{.SSHOPTS}} {{.SSHKEYPRIV}} ubuntu@"$(cat _ip)":.ssh/id_rsa
+      - ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" chmod 0600 .ssh/id_rsa
+
+
+  _get-ip:
+    silent: true
+    cmds:
+    - >
+      gcloud compute instances 
+      describe "{{.NAME}}" --zone="{{.ZONE}}"
+      --format='get(networkInterfaces[0].accessConfigs[0].natIP)' >_ip
+    - |
+      if test -z "$(cat _ip)"
+      then echo "vm not active" ; false
+      fi
+
+  enter:
+    desc: enter vm
+    cmds:
+    - task: _get-ip
+    - >
+      ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" 
+      "mkdir -p ~/olaris-llm"
+    - >
+      ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)"
+      "sudo sshfs {{.SSHOPTS}} 
+      -o allow_other,default_permissions
+      -o IdentityFile=~/.ssh/id_rsa 
+      ubuntu@{{.ORIG}}:$(dirname $PWD) ~/olaris-llm"
+    - gcloud compute ssh "{{.NAME}}" --zone="{{.ZONE}}"
+
+  destroy:
+    desc: destroy vm
+    cmds:
+    - gcloud compute instances delete "{{.NAME}}"
+
+  stop:
+    desc: stop vm
+    cmds:
+    - gcloud compute instances stop "{{.NAME}}"
+
+  start:
+    desc: stop vm
+    cmds:
+    - gcloud compute instance start "{{.NAME}}"

@@ -1,0 +1,63 @@
+#cloud-config
+
+packages:
+  - build-essential
+  - libssl-dev
+  - unzip
+  - python3
+  - python3-pip
+  - python-is-python3
+  - jq
+  - sshfs
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+write_files:
+  - path: /etc/environment
+    permissions: '0644'
+    content: |
+       RUSTUP_HOME=/usr/local/rustup
+       CARGO_HOME=/usr/local/cargo
+       LD_LIBRARY_PATH=/usr/local/cuda/lib64/
+       PATH=/usr/local/cargo/bin:/usr/local/cuda/bin:/bin:/usr/bin:/usr/sbin:/usr/local/bin
+  - path: /usr/local/bin/setup.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      # install cuda 11.7
+      wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
+      mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
+      apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
+      yes | add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /"
+      apt-get update
+      apt-get -y install cuda=11.7.1-1
+      # install docker
+      curl -fsSL https://get.docker.com | bash
+      apt-get -y install nvidia-container-toolkit
+      nvidia-ctk runtime configure --runtime=docker
+      systemctl restart docker
+      # install protoc
+      PROTOC_ZIP=protoc-21.12-linux-x86_64.zip
+      curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/$PROTOC_ZIP
+      unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+      unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+      rm -f $PROTOC_ZIP
+      # install rust
+      source /etc/environment
+      export CARGO_HOME RUSTUP_HOME
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+      # install virtualenv
+      pip3 install virtualenv
+      # install nuv
+      VER="$(curl https://raw.githubusercontent.com/nuvolaris/olaris/3.0.0-testing/nuvroot.json | jq .version -r)"
+      URL="https://github.com/nuvolaris/nuv/releases/download/$VER/nuv_${VER}_amd64.deb"
+      wget --no-verbose $URL -O nuv.deb
+      sudo dpkg -i nuv.deb
+      nuv -update
+      nuv -info
+
+runcmd:
+  - bash /usr/local/bin/setup.sh
+  - /usr/sbin/reboot

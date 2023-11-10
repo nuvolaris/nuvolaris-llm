@@ -1,0 +1,12 @@
+version: '3'
+
+tasks:
+
+  gcp:
+    desc: setup a gpu machine in Gcloud
+
+  util:
+    desc: support utils on gpu machine
+
+  tgi:
+    desc: manage the text generation interface

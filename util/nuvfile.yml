@@ -1,0 +1,13 @@
+version: '3'
+
+tasks:
+
+  lsgpu:
+    desc: list gpu
+    cmds: 
+    - lspci | grep -i nvidia
+    - nvidia-smi
+
+
+
+

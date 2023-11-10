@@ -87,11 +87,12 @@ tasks:
   list:
     desc: enter vm
     cmds:
-    - gcloud compute instances list 
+    - gcloud compute instances list | grep {{.NAME}}
 
   enter:
     desc: enter vm
     cmds:
+    - task: _mount
     - gcloud compute ssh "{{.NAME}}" --zone="{{.ZONE}}"
 
   destroy:
@@ -102,9 +103,9 @@ tasks:
   stop:
     desc: stop vm
     cmds:
-    - gcloud compute instances stop "{{.NAME}}"
+    - gcloud compute instances stop "{{.NAME}}" --zone="{{.ZONE}}"
 
   start:
     desc: stop vm
     cmds:
-    - gcloud compute instance start "{{.NAME}}"
+    - gcloud compute instances start "{{.NAME}}" --zone="{{.ZONE}}"

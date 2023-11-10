@@ -32,8 +32,6 @@ You need:
 - a default project 
 - vm with a public hostname to connect from
 
-Please review 
-
 ## Manage a Cloud VM with GPU
 
 ```
@@ -43,4 +41,10 @@ nlg destroy
 nlg start
 nlg enter
 nlg stop
+```
+
+## Build tgi
+
+```
+nlt build 
 ```

@@ -1,5 +1,1 @@
-
-
-
-
-
+alias nlt="nuv llm tgi"

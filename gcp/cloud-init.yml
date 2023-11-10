@@ -49,7 +49,7 @@ write_files:
       export CARGO_HOME RUSTUP_HOME
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
       # install virtualenv
-      pip3 install virtualenv
+      pip3 install virtualenv httpie
       # install nuv
       VER="$(curl https://raw.githubusercontent.com/nuvolaris/olaris/3.0.0-testing/nuvroot.json | jq .version -r)"
       URL="https://github.com/nuvolaris/nuv/releases/download/$VER/nuv_${VER}_amd64.deb"

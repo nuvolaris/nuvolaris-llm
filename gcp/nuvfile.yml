@@ -3,15 +3,16 @@ version: '3'
 vars:
   ORIG: devkit.nuvolaris.io
   NAME: llm-0-1-gcp
-  ZONE: europe-west4-a
+  #ZONE: europe-west4-a
+  ZONE: us-central1-b
   SSHKEYPRIV: ~/.ssh/id_rsa
   SSHKEY: ~/.ssh/id_rsa.pub
   SSHOPTS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-  MTYPE: n1-standard-8
-  GPUS: nvidia-tesla-t4,count=1
-  #MTYPE: a2-highgpu-1g # 40gb
+  #MTYPE: n1-standard-8
+  #GPUS: nvidia-tesla-t4,count=1
   #MTYPE: a2-ultragpu-1g # 80gb
-  #GPUS: nvidia-tesla-a100,count=1
+  MTYPE: a2-highgpu-1g # 40gb
+  GPUS: nvidia-tesla-a100,count=1
  
 tasks:
 
@@ -32,6 +33,7 @@ tasks:
       --image-project=ubuntu-os-cloud
       --maintenance-policy=TERMINATE
       --metadata-from-file user-data=cloud-init.yml
+      --preemptible
     - task: _add-sshkey
     - task: _wait-ready
     # do it again because of reboot
@@ -83,6 +85,10 @@ tasks:
       -o allow_other,default_permissions
       -o IdentityFile=~/.ssh/id_rsa 
       ubuntu@{{.ORIG}}:$(dirname $PWD) ~/olaris-llm"
+
+  _open-port:
+    - gcloud compute instances add-tags {{.NAME}} --tags={{.NAME}} --zone={{.ZONE}}
+    - gcloud compute firewall-rules create {{.NAME}}-8080 --allow tcp:8080 --target-tags={{.NAME}}
 
   list:
     desc: enter vm

@@ -2,12 +2,13 @@ version: '3'
 
 tasks:
 
-  gpu:
+  ls:
     desc: list gpu
     cmds: 
     - lspci | grep -i nvidia
-    - nvidia-smi
-
-
-
+  
+  wa:
+    desc: watch gpu
+    cmds: 
+    - watch nvidia-smi
 

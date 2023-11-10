@@ -1,6 +1,5 @@
 # Nuvolaris LLM Plugin
 
-
 ## Install
 
 This is a [nuv](https://github.com/nuvolaris/nuv) plugin to setup and manage an LLM provider for Nuvolaris.
@@ -19,7 +18,7 @@ Setup a few convenience aliases
 
 ```
 alias nlg="nuv llm gcp"
-alias nlu="nuv llm utils"
+alias nlu="nuv llm util"
 alias nlt="nuv llm tgi"
 ```
 

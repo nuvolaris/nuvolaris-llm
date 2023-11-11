@@ -39,9 +39,10 @@ tasks:
     # do it again because of reboot
     - task: _wait-ready
     - task: _mount
+    - task: _open-port
 
   _wait-ready:
-    - task: _get-ip
+    - task: get-ip
     - retry -t 100 -m 600 ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" hostname
     - retry -t 100 -m 600 ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" cloud-init status --wait 
 
@@ -56,9 +57,10 @@ tasks:
         gcloud compute instances 
         add-metadata "{{.NAME}}" --zone="{{.ZONE}}" 
         --metadata-from-file ssh-keys=_sshkey
-      - task: _get-ip
+      - task: get-ip
 
-  _get-ip:
+  get-ip:
+    desc: get ip
     silent: true
     cmds:
     - >
@@ -73,7 +75,7 @@ tasks:
       fi
 
   _mount:
-    - task: _get-ip
+    - task: get-ip
     - scp {{.SSHOPTS}} {{.SSHKEYPRIV}} ubuntu@"$(cat _ip)":.ssh/id_rsa
     - ssh {{.SSHOPTS}} ubuntu@"$(cat _ip)" chmod 0600 .ssh/id_rsa
     - >
@@ -115,3 +117,14 @@ tasks:
     desc: stop vm
     cmds:
     - gcloud compute instances start "{{.NAME}}" --zone="{{.ZONE}}"
+
+  use:
+    desc: use a vm, starting, enterning then stopping
+    cmds:
+    - task: start
+    - task: _wait-ready
+    - task: enter
+    - task: stop
+    - task: list
+
+

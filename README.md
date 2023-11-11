@@ -14,7 +14,7 @@ Then you have a `nuv llm` subcommand (if you run from the parent folder)
 
 ## Use
 
-Setup a few convenience aliases
+Setup a few convenience aliases:
 
 ```
 alias nlg="nuv llm gcp"
@@ -33,14 +33,16 @@ You need:
 
 ## Manage a Cloud VM with GPU
 
-```
-nlg create
-nlg destroy
+Commands:
 
-nlg start
-nlg enter
-nlg stop
-```
+- `nlg create`: create a VM with GPU 
+- `nlg destroy`: destroy a VM with GPU
+
+- `nlg start`: start the VM with GPU
+- `nlg stop`: stop the VM with GPU
+
+- `nlg enter`: enter in the VM
+- `nlg use`: star, enter in the vm, then stop it when you exit
 
 ## Build tgi
 

@@ -1,8 +1,30 @@
 version: '3'
 
+vars:
+  MODEL: tiiuae/falcon-7b-instruct
+  N: 200
+
 tasks:
 
-  build:
-    desc: build
+  start:
+    desc: start TGI from docker images
+    cmds: 
+      - > 
+        sudo docker run --gpus all --shm-size 1g -p 8080:80 
+        -v  $NUV_PWD/data:/data 
+        ghcr.io/huggingface/text-generation-inference:latest 
+        --model-id {{.MODEL}}
+
+  query:
+    requires: {vars: [Q]}
+    desc: query TGI with a query Q of N token (default 200)
+    cmds:
+    - > 
+      http -b POST 127.0.0.1:8080/generate 
+      inputs='{{.Q}}'
+      parameters:='{"max_new_tokens":{{.N}}}'
+
+  build: 
+    desc: build TGI locally
     cmds:
     - bash build.sh

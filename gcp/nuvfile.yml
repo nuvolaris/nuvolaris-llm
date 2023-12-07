@@ -90,6 +90,7 @@ tasks:
 
   _open-port:
     - gcloud compute instances add-tags {{.NAME}} --tags={{.NAME}} --zone={{.ZONE}}
+    - gcloud compute firewall-rules create {{.NAME}}-8000 --allow tcp:8000 --target-tags={{.NAME}}
     - gcloud compute firewall-rules create {{.NAME}}-8080 --allow tcp:8080 --target-tags={{.NAME}}
 
   list:

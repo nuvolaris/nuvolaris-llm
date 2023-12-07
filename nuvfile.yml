@@ -10,3 +10,6 @@ tasks:
 
   tgi:
     desc: manage the text generation interface
+
+  vllm:
+    desc: vllm

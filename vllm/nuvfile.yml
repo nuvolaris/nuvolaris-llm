@@ -1,0 +1,64 @@
+version: '3'
+
+vars:
+  TOKEN: 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
+  MODEL: mistralai/Mistral-7B-v0.1
+  #MODEL: tiiuae/falcon-7b
+  N: 20
+
+tasks:
+
+  run:
+    desc: run vllm
+    cmds: 
+     - >
+      sudo docker run --runtime nvidia --gpus all 
+      -v /root/.cache/huggingface:/root/.cache/huggingface 
+      -p 8000:8000
+      --env "HUGGING_FACE_HUB_TOKEN={{.TOKEN}}" 
+      vllm/vllm-openai:latest 
+      --model {{.MODEL}}
+
+
+  run:
+    desc: run vllm
+    cmds: 
+     - >
+      sudo docker run --runtime nvidia --gpus all 
+      -v /root/.cache/huggingface:/root/.cache/huggingface 
+      -p 8000:8000 -d
+      --env "HUGGING_FACE_HUB_TOKEN={{.TOKEN}}" 
+      vllm/vllm-openai:latest 
+      --model {{.MODEL}}
+
+  debug:
+    desc: run vllm
+    cmds:
+     - >
+      sudo docker run --runtime nvidia --gpus all 
+      -v /root/.cache/huggingface:/root/.cache/huggingface 
+      -p 8000:8000
+      --env "HUGGING_FACE_HUB_TOKEN={{.TOKEN}}" 
+      -ti --entrypoint /bin/bash
+      vllm/vllm-openai:latest 
+
+  model: > 
+    curl -s http://localhost:8000/v1/models | jq -r .data[0].id
+
+  query:
+    desc: run vllm
+    requires: {vars: [Q]}
+    vars:
+      MODEL:
+        sh: curl -s http://localhost:8000/v1/models | jq -r .data[0].id
+    cmds:
+     - >
+      curl -s http://locahost:8000/v1/completions 
+      -H "Content-Type: application/json" 
+      -d '{ 
+        "model": "{{.MODEL}}",
+        "prompt": "{{.Q}}",
+        "max_tokens": {{.N}},
+        "temperature": 0
+      }' 
+     - echo TO FIX...

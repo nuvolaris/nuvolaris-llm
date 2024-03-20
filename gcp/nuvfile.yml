@@ -1,10 +1,10 @@
 version: '3'
 
 vars:
-  ORIG: devkit.nuvolaris.io
-  NAME: llm-0-1-gcp
+  ORIG: sciabarra.net
+  NAME: llm1g
   #ZONE: europe-west4-a
-  ZONE: us-central1-b
+  ZONE: us-central1-f
   SSHKEYPRIV: ~/.ssh/id_rsa
   SSHKEY: ~/.ssh/id_rsa.pub
   SSHOPTS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
@@ -107,12 +107,19 @@ tasks:
   destroy:
     desc: destroy vm
     cmds:
-    - gcloud compute instances delete "{{.NAME}}"
+    - gcloud compute instances delete "{{.NAME}}" --zone='{{.ZONE}}'
 
   stop:
     desc: stop vm
     cmds:
     - gcloud compute instances stop "{{.NAME}}" --zone="{{.ZONE}}"
+
+  migrate:
+    desc: change zone
+    cmds:
+    - >
+      gcloud compute instances network-interfaces update "{{.NAME}}"
+      --zone "{{.ZONE}}" --network-interface=nic0
 
   start:
     desc: stop vm
